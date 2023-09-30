@@ -1,0 +1,145 @@
+policy_module(teleport, 1.0.0)
+
+require {
+    type user_t;
+    type staff_t;
+    type unconfined_t;
+}
+
+########################################
+#
+# Declarations
+#
+
+type teleport_t;
+type teleport_exec_t;
+type teleport_port_t;
+type teleport_var_lib_t;
+type teleport_var_run_t;
+type teleport_devpts_t;
+type teleport_tmp_t;
+
+attribute_role teleport_roles;
+
+init_daemon_domain(teleport_t, teleport_exec_t)
+
+#permissive teleport_t;
+
+files_type(teleport_var_lib_t)
+files_pid_file(teleport_var_run_t)
+corenet_reserved_port(teleport_port_t)
+
+typealias teleport_devpts_t alias { user_teleport_devpts_t staff_teleport_devpts_t sysadm_teleport_devpts_t };
+typealias teleport_devpts_t alias { auditadm_teleport_devpts_t secadm_teleport_devpts_t };
+role teleport_roles types teleport_t;
+files_tmp_file(teleport_tmp_t)
+
+########################################
+#
+# teleport local policy
+#
+allow teleport_t self:capability { setgid fsetid setuid dac_override dac_read_search chown };
+allow teleport_t self:process { transition signal_perms getsched setsched getsession getpgid setpgid getcap setcap share getattr noatsecure siginh rlimitinh dyntransition setkeycreate setsockcreate getrlimit setexec };
+allow teleport_t self:fd use;
+allow teleport_t teleport_exec_t:file execute_no_trans;
+allow teleport_t self:fifo_file rw_fifo_file_perms;
+allow teleport_t self:unix_stream_socket create_stream_socket_perms;
+allow teleport_t self:unix_dgram_socket create_stream_socket_perms;
+
+manage_dirs_pattern(teleport_t, teleport_var_lib_t, teleport_var_lib_t)
+manage_files_pattern(teleport_t, teleport_var_lib_t, teleport_var_lib_t)
+manage_lnk_files_pattern(teleport_t, teleport_var_lib_t, teleport_var_lib_t)
+files_var_lib_filetrans(teleport_t, teleport_var_lib_t, { dir file lnk_file })
+
+manage_dirs_pattern(teleport_t, teleport_var_run_t, teleport_var_run_t)
+manage_files_pattern(teleport_t, teleport_var_run_t, teleport_var_run_t)
+manage_lnk_files_pattern(teleport_t, teleport_var_run_t, teleport_var_run_t)
+files_pid_filetrans(teleport_t, teleport_var_run_t, { dir file lnk_file })
+
+domain_use_interactive_fds(teleport_t)
+
+files_read_etc_files(teleport_t)
+auth_read_shadow(teleport_t)
+
+auth_use_nsswitch(teleport_t)
+
+miscfiles_read_localization(teleport_t)
+
+sysnet_dns_name_resolve(teleport_t)
+
+allow teleport_t teleport_port_t:tcp_socket {name_bind name_connect};
+
+
+corenet_all_recvfrom_unlabeled(teleport_t)
+corenet_all_recvfrom_netlabel(teleport_t)
+corenet_tcp_sendrecv_generic_if(teleport_t)
+corenet_udp_sendrecv_generic_if(teleport_t)
+corenet_tcp_sendrecv_generic_node(teleport_t)
+corenet_udp_sendrecv_generic_node(teleport_t)
+corenet_udp_bind_generic_node(teleport_t)
+corenet_tcp_connect_http_port(teleport_t)
+
+allow teleport_t self:tcp_socket create_stream_socket_perms;
+allow teleport_t self:udp_socket create_socket_perms;
+allow teleport_t self:netlink_route_socket r_netlink_socket_perms;
+
+dev_read_sysfs(teleport_t)
+kernel_dgram_send(teleport_t)
+kernel_read_net_sysctls(teleport_t)
+kernel_search_network_sysctl(teleport_t)
+logging_stream_connect_syslog(teleport_t)
+
+term_login_pty(teleport_devpts_t)
+term_user_pty(teleport_t, teleport_devpts_t)
+ubac_constrained(teleport_devpts_t)
+
+allow teleport_t teleport_devpts_t:chr_file { rw_chr_file_perms setattr_chr_file_perms };
+term_create_pty(teleport_t, teleport_devpts_t)
+
+userdom_read_user_home_content_files(teleport_t)
+userdom_read_user_home_content_symlinks(teleport_t)
+userdom_spec_domtrans_unpriv_users(teleport_t)
+userdom_dyntransition_unpriv_users(teleport_t)
+userdom_signal_unpriv_users(teleport_t)
+userdom_use_inherited_user_terminals(teleport_t)
+
+tunable_policy(`ssh_sysadm_login',`
+	# Relabel and access ptys created by sshd
+	# ioctl is necessary for logout() processing for utmp entry and for w to
+	# display the tty.
+	# some versions of sshd on the new SE Linux require setattr
+	userdom_signal_all_users(teleport_t)
+	userdom_spec_domtrans_all_users(teleport_t)
+	userdom_dyntransition_admin_users(teleport_t)
+')
+
+#auth_exec_login_program(teleport_t)
+auth_run_chk_passwd(teleport_t, teleport_roles)
+
+auth_rw_lastlog(teleport_t)
+auth_rw_faillog(teleport_t)
+auth_write_login_records(teleport_t)
+init_rw_utmp(teleport_t)
+files_list_tmp(teleport_t)
+
+manage_dirs_pattern(teleport_t, teleport_tmp_t, teleport_tmp_t)
+manage_files_pattern(teleport_t, teleport_tmp_t, teleport_tmp_t)
+manage_sock_files_pattern(teleport_t, teleport_tmp_t, teleport_tmp_t)
+files_tmp_filetrans(teleport_t, teleport_tmp_t, { file dir })
+
+
+optional_policy(`
+	unconfined_shell_domtrans(teleport_t)
+')
+
+optional_policy(`
+	systemd_dbus_chat_logind(teleport_t)
+')
+
+auth_login_pgm_domain(teleport_t)
+logging_send_syslog_msg(teleport_t)
+
+# do this for every SELinux user
+allow user_t teleport_devpts_t:chr_file rw_term_perms;
+allow staff_t teleport_devpts_t:chr_file rw_term_perms;
+allow unconfined_t teleport_exec_t:file entrypoint;

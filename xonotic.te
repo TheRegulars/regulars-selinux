@@ -1,0 +1,70 @@
+policy_module(xonotic, 1.0.0)
+
+########################################
+#
+# Declarations
+#
+require {
+    type systemd_tmpfiles_t;
+    type init_t;
+}
+
+type xonotic_t;
+type xonotic_exec_t;
+type xonotic_file_t;
+type xonotic_runtime_t;
+type xonotic_port_t;
+init_daemon_domain(xonotic_t, xonotic_exec_t)
+init_nnp_daemon_domain(xonotic_t)
+
+###
+files_type(xonotic_file_t)
+files_type(xonotic_runtime_t)
+
+corenet_reserved_port(xonotic_port_t)
+
+allow xonotic_t self:fifo_file rw_fifo_file_perms;
+allow xonotic_t self:unix_stream_socket create_stream_socket_perms;
+allow init_t xonotic_file_t:file { open read execute execute_no_trans };
+allow init_t xonotic_file_t:lnk_file { read };
+
+list_dirs_pattern(xonotic_t, xonotic_exec_t, xonotic_exec_t)
+list_dirs_pattern(xonotic_t, xonotic_file_t, xonotic_file_t)
+read_files_pattern(xonotic_t, xonotic_file_t, xonotic_file_t)
+read_lnk_files_pattern(xonotic_t, xonotic_file_t, xonotic_file_t)
+manage_dirs_pattern(xonotic_t, xonotic_runtime_t, xonotic_runtime_t)
+manage_files_pattern(xonotic_t, xonotic_runtime_t, xonotic_runtime_t)
+manage_lnk_files_pattern(xonotic_t, xonotic_runtime_t, xonotic_runtime_t)
+manage_fifo_files_pattern(xonotic_t, xonotic_runtime_t, xonotic_runtime_t)
+files_pid_filetrans(xonotic_t, xonotic_runtime_t, { dir file lnk_file })
+domain_use_interactive_fds(xonotic_t)
+files_read_etc_files(xonotic_t)
+# files_map_etc_files(xonotic_t)
+miscfiles_read_localization(xonotic_t)
+
+dev_read_urand(xonotic_t)
+fs_search_tmpfs(xonotic_t)
+kernel_read_crypto_sysctls(xonotic_t)
+kernel_read_system_state(xonotic_t)
+# kernel_search_fs_sysctls(xonotic_t)
+sysnet_read_config(xonotic_t)
+# systemd_tmpfilesd_managed(xonotic_runtime_t, fifo_file)
+
+corenet_tcp_connect_http_port(xonotic_t)
+allow xonotic_t xonotic_port_t:udp_socket name_bind;
+
+corenet_all_recvfrom_unlabeled(xonotic_t)
+corenet_all_recvfrom_netlabel(xonotic_t)
+corenet_tcp_sendrecv_generic_if(xonotic_t)
+corenet_udp_sendrecv_generic_if(xonotic_t)
+corenet_tcp_sendrecv_generic_node(xonotic_t)
+corenet_udp_sendrecv_generic_node(xonotic_t)
+corenet_udp_bind_generic_node(xonotic_t)
+
+allow xonotic_t self:tcp_socket create_socket_perms;
+allow xonotic_t self:udp_socket create_socket_perms;
+allow xonotic_t self:netlink_route_socket r_netlink_socket_perms;
+
+allow systemd_tmpfiles_t xonotic_runtime_t:fifo_file { create getattr };
+sysnet_dns_name_resolve(xonotic_t)
+dbus_send_system_bus(xonotic_t)

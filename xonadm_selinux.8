@@ -1,0 +1,483 @@
+.TH  "xonadm_selinux"  "8"  "xonadm" "mgrepl@redhat.com" "xonadm SELinux Policy documentation"
+.SH "NAME"
+xonadm_u \- \fBxonadm user role\fP - Security Enhanced Linux Policy
+
+.SH DESCRIPTION
+
+\fBxonadm_u\fP is an SELinux User defined in the SELinux
+policy. SELinux users have default roles, \fBxonadm_r\fP.  The
+default role has a default type, \fBxonadm_t\fP, associated with it.
+
+The SELinux user will usually login to a system with a context that looks like:
+
+.B xonadm_u:xonadm_r:xonadm_t:s0
+
+Linux users are automatically assigned an SELinux users at login.
+Login programs use the SELinux User to assign initial context to the user's shell.
+
+SELinux policy uses the context to control the user's access.
+
+By default all users are assigned to the SELinux user via the \fB__default__\fP flag
+
+On Targeted policy systems the \fB__default__\fP user is assigned to the \fBunconfined_u\fP SELinux user.
+
+You can list all Linux User to SELinux user mapping using:
+
+.B semanage login -l
+
+If you wanted to change the default user mapping to use the xonadm_u user, you would execute:
+
+.B semanage login -m -s xonadm_u __default__
+
+
+If you want to map the one Linux user (joe) to the SELinux user xonadm, you would execute:
+
+.B $ semanage login -a -s xonadm_u joe
+
+
+.SH USER DESCRIPTION
+
+The SELinux user xonadm_u is defined in policy as a unprivileged user. SELinux prevents unprivileged users from doing administration tasks without transitioning to a different role.
+
+.SH SUDO
+
+.SH X WINDOWS LOGIN
+
+The SELinux user xonadm_u is able to X Windows login.
+
+.SH NETWORK
+
+.TP
+The SELinux user xonadm_u is able to listen on the following tcp ports.
+
+.B 6000-6020
+
+.B 1716
+
+.B 3689
+
+.B all ports >= 1024
+
+.B all ports without defined types
+
+.B 32768-60999
+
+.TP
+The SELinux user xonadm_u is able to connect to the following tcp ports.
+
+.B 8955
+
+.B all ports
+
+.B 53,853
+
+.B 389,636,3268,3269,7389
+
+.B all ports without defined types
+
+.B 32768-60999
+
+.B all ports < 1024
+
+.B 9080
+
+.B 88,750,4444
+
+.TP
+The SELinux user xonadm_u is able to listen on the following udp ports.
+
+.B 32768-60999
+
+.B all ports without defined types
+
+.B all ports >= 1024
+
+.TP
+The SELinux user xonadm_u is able to connect to the following tcp ports.
+
+.B 8955
+
+.B all ports
+
+.B 53,853
+
+.B 389,636,3268,3269,7389
+
+.B all ports without defined types
+
+.B 32768-60999
+
+.B all ports < 1024
+
+.B 9080
+
+.B 88,750,4444
+
+.SH BOOLEANS
+SELinux policy is customizable based on least access required.  xonadm policy is extremely flexible and has several booleans that allow you to manipulate the policy and run xonadm with the tightest access possible.
+
+
+.PP
+If you want to determine whether crond can execute jobs in the user domain as opposed to the the generic cronjob domain, you must turn on the cron_userdomain_transition boolean. Enabled by default.
+
+.EX
+.B setsebool -P cron_userdomain_transition 1
+
+.EE
+
+.PP
+If you want to deny all system processes and Linux users to use bluetooth wireless technology, you must turn on the deny_bluetooth boolean. Disabled by default.
+
+.EX
+.B setsebool -P deny_bluetooth 1
+
+.EE
+
+.PP
+If you want to deny user domains applications to map a memory region as both executable and writable, this is dangerous and the executable should be reported in bugzilla, you must turn on the deny_execmem boolean. Disabled by default.
+
+.EX
+.B setsebool -P deny_execmem 1
+
+.EE
+
+.PP
+If you want to deny any process from ptracing or debugging any other processes, you must turn on the deny_ptrace boolean. Disabled by default.
+
+.EX
+.B setsebool -P deny_ptrace 1
+
+.EE
+
+.PP
+If you want to allow all domains to execute in fips_mode, you must turn on the fips_mode boolean. Enabled by default.
+
+.EX
+.B setsebool -P fips_mode 1
+
+.EE
+
+.PP
+If you want to determine whether calling user domains can execute Git daemon in the git_session_t domain, you must turn on the git_session_users boolean. Disabled by default.
+
+.EX
+.B setsebool -P git_session_users 1
+
+.EE
+
+.PP
+If you want to allow system to run with NIS, you must turn on the nis_enabled boolean. Disabled by default.
+
+.EX
+.B setsebool -P nis_enabled 1
+
+.EE
+
+.PP
+If you want to allow pppd to be run for a regular user, you must turn on the pppd_for_user boolean. Disabled by default.
+
+.EX
+.B setsebool -P pppd_for_user 1
+
+.EE
+
+.PP
+If you want to allow unconfined executables to make their stack executable.  This should never, ever be necessary. Probably indicates a badly coded executable, but could indicate an attack. This executable should be reported in bugzilla, you must turn on the selinuxuser_execstack boolean. Enabled by default.
+
+.EX
+.B setsebool -P selinuxuser_execstack 1
+
+.EE
+
+.PP
+If you want to allow users to connect to the local mysql server, you must turn on the selinuxuser_mysql_connect_enabled boolean. Disabled by default.
+
+.EX
+.B setsebool -P selinuxuser_mysql_connect_enabled 1
+
+.EE
+
+.PP
+If you want to allow user to r/w files on filesystems that do not have extended attributes (FAT, CDROM, FLOPPY), you must turn on the selinuxuser_rw_noexattrfile boolean. Enabled by default.
+
+.EX
+.B setsebool -P selinuxuser_rw_noexattrfile 1
+
+.EE
+
+.PP
+If you want to support NFS home directories, you must turn on the use_nfs_home_dirs boolean. Disabled by default.
+
+.EX
+.B setsebool -P use_nfs_home_dirs 1
+
+.EE
+
+.PP
+If you want to support SAMBA home directories, you must turn on the use_samba_home_dirs boolean. Disabled by default.
+
+.EX
+.B setsebool -P use_samba_home_dirs 1
+
+.EE
+
+.SH HOME_EXEC
+
+The SELinux user xonadm_u is able execute home content files.
+
+.SH TRANSITIONS
+
+Three things can happen when xonadm_t attempts to execute a program.
+
+\fB1.\fP SELinux Policy can deny xonadm_t from executing the program.
+
+.TP
+
+\fB2.\fP SELinux Policy can allow xonadm_t to execute the program in the current user type.
+
+Execute the following to see the types that the SELinux user xonadm_t can execute without transitioning:
+
+.B sesearch -A -s xonadm_t -c file -p execute_no_trans
+
+.TP
+
+\fB3.\fP SELinux can allow xonadm_t to execute the program and transition to a new type.
+
+Execute the following to see the types that the SELinux user xonadm_t can execute and transition:
+
+.B $ sesearch -A -s xonadm_t -c process -p transition
+
+
+.SH "MANAGED FILES"
+
+The SELinux process type xonadm_t can manage files labeled with the following file types.  The paths listed are the default paths for these file types.  Note the processes UID still need to have DAC permissions.
+
+.br
+.B alsa_home_t
+
+	/home/[^/]+/\.asoundrc
+.br
+
+.br
+.B auth_cache_t
+
+	/var/cache/coolkey(/.*)?
+.br
+
+.br
+.B chrome_sandbox_tmpfs_t
+
+
+.br
+.B faillog_t
+
+	/var/log/btmp.*
+.br
+	/var/log/faillog.*
+.br
+	/var/log/tallylog.*
+.br
+	/var/run/faillock(/.*)?
+.br
+
+.br
+.B games_data_t
+
+	/var/games(/.*)?
+.br
+	/var/lib/games(/.*)?
+.br
+
+.br
+.B gconf_tmp_t
+
+	/tmp/gconfd-[^/]+/.*
+.br
+
+.br
+.B gpg_agent_tmp_t
+
+	/home/[^/]+/\.gnupg/log-socket
+.br
+
+.br
+.B krb5_host_rcache_t
+
+	/var/tmp/krb5_0.rcache2
+.br
+	/var/cache/krb5rcache(/.*)?
+.br
+	/var/tmp/nfs_0
+.br
+	/var/tmp/DNS_25
+.br
+	/var/tmp/host_0
+.br
+	/var/tmp/imap_0
+.br
+	/var/tmp/HTTP_23
+.br
+	/var/tmp/HTTP_48
+.br
+	/var/tmp/ldap_55
+.br
+	/var/tmp/ldap_487
+.br
+	/var/tmp/ldapmap1_0
+.br
+
+.br
+.B mail_spool_t
+
+	/var/mail(/.*)?
+.br
+	/var/spool/imap(/.*)?
+.br
+	/var/spool/mail(/.*)?
+.br
+	/var/spool/smtpd(/.*)?
+.br
+
+.br
+.B mqueue_spool_t
+
+	/var/spool/(client)?mqueue(/.*)?
+.br
+	/var/spool/mqueue\.in(/.*)?
+.br
+
+.br
+.B pulseaudio_tmpfs_t
+
+
+.br
+.B pulseaudio_tmpfsfile
+
+
+.br
+.B security_t
+
+	/selinux
+.br
+
+.br
+.B session_dbusd_tmp_t
+
+	/var/run/user/[0-9]+/bus
+.br
+	/var/run/user/[0-9]+/dbus(/.*)?
+.br
+	/var/run/user/[0-9]+/dbus-1(/.*)?
+.br
+
+.br
+.B sysstat_log_t
+
+	/var/log/sa(/.*)?
+.br
+	/opt/sartest(/.*)?
+.br
+	/var/log/atsar(/.*)?
+.br
+	/var/log/sysstat(/.*)?
+.br
+
+.br
+.B systemd_passwd_var_run_t
+
+	/var/run/systemd/ask-password(/.*)?
+.br
+	/var/run/systemd/ask-password-block(/.*)?
+.br
+
+.br
+.B usbfs_t
+
+
+.br
+.B user_fonts_cache_t
+
+	/root/\.fontconfig(/.*)?
+.br
+	/root/\.fonts/auto(/.*)?
+.br
+	/root/\.fonts\.cache-.*
+.br
+	/root/\.cache/fontconfig(/.*)?
+.br
+	/home/[^/]+/\.fontconfig(/.*)?
+.br
+	/home/[^/]+/\.fonts/auto(/.*)?
+.br
+	/home/[^/]+/\.fonts\.cache-.*
+.br
+	/home/[^/]+/\.cache/fontconfig(/.*)?
+.br
+
+.br
+.B user_home_type
+
+	all user home files
+.br
+
+.br
+.B user_tmp_type
+
+	all user tmp files
+.br
+
+.br
+.B xonotic_file_t
+
+	/opt/xonotic/.*
+.br
+	/opt/xonotic
+.br
+
+.br
+.B xonotic_runtime_t
+
+	/run/xonotic/.*
+.br
+	/var/run/xonotic/.*
+.br
+	/opt/xonotic/server/.*
+.br
+	/run/xonotic
+.br
+	/var/run/xonotic
+.br
+	/opt/xonotic/server
+.br
+	/mnt/demos/.*
+.br
+	/mnt/demos
+.br
+
+.br
+.B xserver_tmpfs_t
+
+
+.SH "COMMANDS"
+.B semanage fcontext
+can also be used to manipulate default file context mappings.
+.PP
+.B semanage permissive
+can also be used to manipulate whether or not a process type is permissive.
+.PP
+.B semanage module
+can also be used to enable/disable/install/remove policy modules.
+
+.B semanage boolean
+can also be used to manipulate the booleans
+
+.PP
+.B system-config-selinux
+is a GUI tool available to customize SELinux policy settings.
+
+.SH AUTHOR
+This manual page was auto-generated using
+.B "sepolicy manpage".
+
+.SH "SEE ALSO"
+selinux(8), xonadm(8), semanage(8), restorecon(8), chcon(1), sepolicy(8), setsebool(8), xonadm_dbusd_selinux(8), xonadm_dbusd_selinux(8), xonadm_gkeyringd_selinux(8), xonadm_gkeyringd_selinux(8), xonadm_seunshare_selinux(8), xonadm_seunshare_selinux(8)

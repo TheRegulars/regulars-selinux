@@ -1,0 +1,187 @@
+.TH  "drcon_selinux"  "8"  "23-06-06" "drcon" "SELinux Policy drcon"
+.SH "NAME"
+drcon_selinux \- Security Enhanced Linux Policy for the drcon processes
+.SH "DESCRIPTION"
+
+Security-Enhanced Linux secures the drcon processes via flexible mandatory access control.
+
+The drcon processes execute with the drcon_t SELinux type. You can check if you have these processes running by executing the \fBps\fP command with the \fB\-Z\fP qualifier.
+
+For example:
+
+.B ps -eZ | grep drcon_t
+
+
+.SH "ENTRYPOINTS"
+
+The drcon_t SELinux type can be entered via the \fBdrcon_exec_t\fP file type.
+
+The default entrypoint paths for the drcon_t domain are the following:
+
+/opt/bin/drcon
+.SH PROCESS TYPES
+SELinux defines process types (domains) for each process running on the system
+.PP
+You can see the context of a process using the \fB\-Z\fP option to \fBps\bP
+.PP
+Policy governs the access confined processes have to files.
+SELinux drcon policy is very flexible allowing users to setup their drcon processes in as secure a method as possible.
+.PP
+The following process types are defined for drcon:
+
+.EX
+.B drcon_t
+.EE
+.PP
+Note:
+.B semanage permissive -a drcon_t
+can be used to make the process type drcon_t permissive. SELinux does not deny access to permissive process types, but the AVC (SELinux denials) messages are still generated.
+
+.SH BOOLEANS
+SELinux policy is customizable based on least access required.  drcon policy is extremely flexible and has several booleans that allow you to manipulate the policy and run drcon with the tightest access possible.
+
+
+.PP
+If you want to allow confined applications to use nscd shared memory, you must turn on the nscd_use_shm boolean. Enabled by default.
+
+.EX
+.B setsebool -P nscd_use_shm 1
+
+.EE
+
+.PP
+If you want to support NFS home directories, you must turn on the use_nfs_home_dirs boolean. Disabled by default.
+
+.EX
+.B setsebool -P use_nfs_home_dirs 1
+
+.EE
+
+.PP
+If you want to support SAMBA home directories, you must turn on the use_samba_home_dirs boolean. Disabled by default.
+
+.EX
+.B setsebool -P use_samba_home_dirs 1
+
+.EE
+
+.SH "MANAGED FILES"
+
+The SELinux process type drcon_t can manage files labeled with the following file types.  The paths listed are the default paths for these file types.  Note the processes UID still need to have DAC permissions.
+
+.br
+.B drcon_user_file_t
+
+	/home/[^/]+/.drcon(/.*)?
+.br
+
+.br
+.B tmp_t
+
+	/sandbox(/.*)?
+.br
+	/tmp
+.br
+	/usr/tmp
+.br
+	/var/tmp
+.br
+	/var/tmp
+.br
+	/tmp-inst
+.br
+	/var/tmp-inst
+.br
+	/var/tmp/tmp-inst
+.br
+	/var/tmp/vi\.recover
+.br
+
+.br
+.B tmpfs_t
+
+	/dev/shm
+.br
+	/var/run/shm
+.br
+	/usr/lib/udev/devices/shm
+.br
+
+.SH FILE CONTEXTS
+SELinux requires files to have an extended attribute to define the file type.
+.PP
+You can see the context of a file using the \fB\-Z\fP option to \fBls\bP
+.PP
+Policy governs the access confined processes have to these files.
+SELinux drcon policy is very flexible allowing users to setup their drcon processes in as secure a method as possible.
+.PP
+
+.PP
+.B STANDARD FILE CONTEXT
+
+SELinux defines the file context types for the drcon, if you wanted to
+store files with these types in a different paths, you need to execute the semanage command to specify alternate labeling and then use restorecon to put the labels on disk.
+
+.B semanage fcontext -a -t drcon_exec_t '/srv/drcon/content(/.*)?'
+.br
+.B restorecon -R -v /srv/mydrcon_content
+
+Note: SELinux often uses regular expressions to specify labels that match multiple files.
+
+.I The following file types are defined for drcon:
+
+
+.EX
+.PP
+.B drcon_exec_t
+.EE
+
+- Set files with the drcon_exec_t type, if you want to transition an executable to the drcon_t domain.
+
+
+.EX
+.PP
+.B drcon_global_file_t
+.EE
+
+- Set files with the drcon_global_file_t type, if you want to treat the files as drcon global content.
+
+
+.EX
+.PP
+.B drcon_user_file_t
+.EE
+
+- Set files with the drcon_user_file_t type, if you want to treat the files as drcon user content.
+
+
+.PP
+Note: File context can be temporarily modified with the chcon command.  If you want to permanently change the file context you need to use the
+.B semanage fcontext
+command.  This will modify the SELinux labeling database.  You will need to use
+.B restorecon
+to apply the labels.
+
+.SH "COMMANDS"
+.B semanage fcontext
+can also be used to manipulate default file context mappings.
+.PP
+.B semanage permissive
+can also be used to manipulate whether or not a process type is permissive.
+.PP
+.B semanage module
+can also be used to enable/disable/install/remove policy modules.
+
+.B semanage boolean
+can also be used to manipulate the booleans
+
+.PP
+.B system-config-selinux
+is a GUI tool available to customize SELinux policy settings.
+
+.SH AUTHOR
+This manual page was auto-generated using
+.B "sepolicy manpage".
+
+.SH "SEE ALSO"
+selinux(8), drcon(8), semanage(8), restorecon(8), chcon(1), sepolicy(8), setsebool(8)

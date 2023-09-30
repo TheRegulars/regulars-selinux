@@ -1,0 +1,94 @@
+policy_module(drcon, 1.0.0)
+
+require {
+    type user_t;
+    type staff_t;
+    type unconfined_t;
+    type sysadm_t;
+    type xonadm_t;
+    type teleport_devpts_t;
+    role unconfined_r;
+    role user_r;
+    role staff_r;
+    role sysadm_r;
+    role xonadm_r;
+    type tmp_t;
+    type tmpfs_t;
+}
+
+########################################
+#
+# Declarations
+#
+
+attribute_role drcon_roles;
+roleattribute system_r drcon_roles;
+roleattribute unconfined_r drcon_roles;
+roleattribute user_r drcon_roles;
+roleattribute xonadm_r drcon_roles;
+
+type drcon_t;
+type drcon_exec_t;
+type drcon_global_file_t;
+type drcon_user_file_t;
+application_domain(drcon_t, drcon_exec_t)
+role drcon_roles types drcon_t;
+
+allow drcon_t tmp_t:file { open write };
+allow drcon_t tmp_t:dir write;
+allow drcon_t tmpfs_t:file { open read write map execute };
+
+files_type(drcon_global_file_t)
+userdom_user_home_content(drcon_user_file_t)
+userdom_list_user_home_dirs(drcon_t)
+manage_dirs_pattern(drcon_t, drcon_user_file_t, drcon_user_file_t)
+manage_files_pattern(drcon_t, drcon_user_file_t, drcon_user_file_t)
+manage_lnk_files_pattern(drcon_t, drcon_user_file_t, drcon_user_file_t)
+
+#permissive drcon_t;
+
+########################################
+#
+# drcon local policy
+#
+allow drcon_t self:process { fork signal_perms sigkill };
+allow drcon_t self:fifo_file manage_fifo_file_perms;
+allow drcon_t self:unix_stream_socket create_stream_socket_perms;
+allow drcon_t self:udp_socket create_socket_perms;
+
+domain_use_interactive_fds(drcon_t)
+userdom_use_inherited_user_ptys(drcon_t)
+userdom_use_inherited_user_terminals(drcon_t)
+files_read_etc_files(drcon_t)
+miscfiles_read_localization(drcon_t)
+sysnet_dns_name_resolve(drcon_t)
+
+read_files_pattern(drcon_t, drcon_global_file_t, drcon_global_file_t)
+
+allow drcon_t teleport_devpts_t:chr_file rw_inherited_term_perms;
+
+
+domtrans_pattern(unconfined_t, drcon_exec_t, drcon_t)
+domtrans_pattern(staff_t, drcon_exec_t, drcon_t)
+domtrans_pattern(user_t, drcon_exec_t, drcon_t)
+domtrans_pattern(sysadm_t, drcon_exec_t, drcon_t)
+domtrans_pattern(xonadm_t, drcon_exec_t, drcon_t)
+
+ps_process_pattern(unconfined_t, drcon_t)
+ps_process_pattern(staff_t, drcon_t)
+ps_process_pattern(user_t, drcon_t)
+ps_process_pattern(sysadm_t, drcon_t)
+ps_process_pattern(xonadm_t, drcon_t)
+
+dontaudit user_t drcon_global_file_t:file { getattr read };
+dontaudit user_t drcon_t:process { noatsecure ptrace rlimitinh siginh };
+
+dontaudit xonadm_t drcon_global_file_t:file { getattr read };
+dontaudit xonadm_t drcon_t:process { noatsecure ptrace rlimitinh siginh };
+
+
+userdom_user_home_dir_filetrans(unconfined_t, drcon_user_file_t, dir, ".drcon")
+userdom_user_home_dir_filetrans(sysadm_t, drcon_user_file_t, dir, ".drcon")
+userdom_user_home_dir_filetrans(user_t, drcon_user_file_t, dir, ".drcon")
+userdom_user_home_dir_filetrans(staff_t, drcon_user_file_t, dir, ".drcon")
+userdom_user_home_dir_filetrans(xonadm_t, drcon_user_file_t, dir, ".drcon")

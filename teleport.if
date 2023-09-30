@@ -1,0 +1,178 @@
+
+## <summary>policy for teleport</summary>
+
+########################################
+## <summary>
+##	Execute teleport_exec_t in the teleport domain.
+## </summary>
+## <param name="domain">
+## <summary>
+##	Domain allowed to transition.
+## </summary>
+## </param>
+#
+interface(`teleport_domtrans',`
+	gen_require(`
+		type teleport_t, teleport_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	domtrans_pattern($1, teleport_exec_t, teleport_t)
+')
+
+######################################
+## <summary>
+##	Execute teleport in the caller domain.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`teleport_exec',`
+	gen_require(`
+		type teleport_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	can_exec($1, teleport_exec_t)
+')
+
+########################################
+## <summary>
+##	Search teleport lib directories.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`teleport_search_lib',`
+	gen_require(`
+		type teleport_var_lib_t;
+	')
+
+	allow $1 teleport_var_lib_t:dir search_dir_perms;
+	files_search_var_lib($1)
+')
+
+########################################
+## <summary>
+##	Read teleport lib files.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`teleport_read_lib_files',`
+	gen_require(`
+		type teleport_var_lib_t;
+	')
+
+	files_search_var_lib($1)
+	read_files_pattern($1, teleport_var_lib_t, teleport_var_lib_t)
+')
+
+########################################
+## <summary>
+##	Manage teleport lib files.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`teleport_manage_lib_files',`
+	gen_require(`
+		type teleport_var_lib_t;
+	')
+
+	files_search_var_lib($1)
+	manage_files_pattern($1, teleport_var_lib_t, teleport_var_lib_t)
+')
+
+########################################
+## <summary>
+##	Manage teleport lib directories.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`teleport_manage_lib_dirs',`
+	gen_require(`
+		type teleport_var_lib_t;
+	')
+
+	files_search_var_lib($1)
+	manage_dirs_pattern($1, teleport_var_lib_t, teleport_var_lib_t)
+')
+
+########################################
+## <summary>
+##	Read teleport PID files.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`teleport_read_pid_files',`
+	gen_require(`
+		type teleport_var_run_t;
+	')
+
+	files_search_pids($1)
+	read_files_pattern($1, teleport_var_run_t, teleport_var_run_t)
+')
+
+
+########################################
+## <summary>
+##	All of the rules required to administrate
+##	an teleport environment
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+## <param name="role">
+##	<summary>
+##	Role allowed access.
+##	</summary>
+## </param>
+## <rolecap/>
+#
+interface(`teleport_admin',`
+	gen_require(`
+		type teleport_t;
+		type teleport_var_lib_t;
+		type teleport_var_run_t;
+	')
+
+	allow $1 teleport_t:process { signal_perms };
+	ps_process_pattern($1, teleport_t)
+
+    tunable_policy(`deny_ptrace',`',`
+        allow $1 teleport_t:process ptrace;
+    ')
+
+	files_search_var_lib($1)
+	admin_pattern($1, teleport_var_lib_t)
+
+	files_search_pids($1)
+	admin_pattern($1, teleport_var_run_t)
+	optional_policy(`
+		systemd_passwd_agent_exec($1)
+		systemd_read_fifo_file_passwd_run($1)
+	')
+')

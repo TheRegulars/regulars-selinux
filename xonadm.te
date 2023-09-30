@@ -1,0 +1,96 @@
+policy_module(xonadm, 1.0.0)
+
+require {
+    type teleport_devpts_t;
+    type teleport_exec_t;
+}
+
+########################################
+#
+# Declarations
+#
+
+role xonadm_r;
+#userdom_base_user_template(xonadm)
+userdom_unpriv_user_template(xonadm)
+
+########################################
+#
+# xonadm local policy
+#
+
+
+domain_use_interactive_fds(xonadm_t)
+
+files_read_etc_files(xonadm_t)
+
+miscfiles_read_localization(xonadm_t)
+
+allow xonadm_t self:capability { dac_override dac_read_search kill sys_ptrace sys_nice setgid setuid sys_resource };
+allow xonadm_t self:netlink_generic_socket { create_socket_perms };
+allow xonadm_t self:process setrlimit;
+files_dontaudit_search_all_dirs(xonadm_t)
+
+selinux_get_enforce_mode(xonadm_t)
+seutil_domtrans_setfiles(xonadm_t)
+seutil_search_default_contexts(xonadm_t)
+
+logging_send_syslog_msg(xonadm_t)
+
+kernel_read_system_state(xonadm_t)
+
+domain_dontaudit_search_all_domains_state(xonadm_t)
+domain_dontaudit_ptrace_all_domains(xonadm_t)
+
+userdom_dontaudit_search_admin_dir(xonadm_t)
+userdom_dontaudit_search_user_home_dirs(xonadm_t)
+
+userdom_read_user_home_content_files(xonadm_t)
+userdom_read_user_tmp_files(xonadm_t)
+
+userdom_manage_user_home_content_dirs(xonadm_t)
+userdom_manage_user_home_content_files(xonadm_t)
+userdom_manage_user_home_content_symlinks(xonadm_t)
+userdom_manage_user_tmp_files(xonadm_t)
+
+auth_read_passwd(xonadm_t)
+systemd_dbus_chat_hostnamed(xonadm_t)
+systemd_exec_systemctl(xonadm_t)
+systemd_dbus_chat_machined(xonadm_t)
+systemd_hwdb_mmap_config(xonadm_t)
+
+
+init_dbus_chat(xonadm_t)
+init_dbus_chat_script(xonadm_t)
+init_status(xonadm_t)
+mount_signal(xonadm_t)
+udev_read_state(xonadm_t)
+kernel_read_state(xonadm_t)
+#container_read_state(xonadm_t)
+logging_list_logs(xonadm_t)
+logging_read_syslog_pid(xonadm_t)
+systemd_passwd_watch_pid_dirs(xonadm_t)
+systemd_tmpfiles_exec(xonadm_t)
+
+logging_read_generic_logs(xonadm_t)
+chronyd_read_log(xonadm_t)
+sysstat_manage_log(xonadm_t)
+
+# Fixes
+systemd_config_generic_services(xonadm_t)
+allow xonadm_t systemd_unit_file_t:lnk_file read;
+#userdom_manage_tmp_dirs(xonadm_t)
+#domain_obj_id_change_exemption(xonadm_t)
+
+optional_policy(`
+     mandb_map_cache_files(xonadm_t)
+')
+
+# services
+xonotic_admin(xonadm_t)
+chronyd_systemctl(xonadm_t)
+avahi_systemctl(xonadm_t)
+
+# custom for teleport
+allow xonadm_t teleport_devpts_t:chr_file rw_term_perms;
+allow xonadm_t teleport_exec_t:file entrypoint;

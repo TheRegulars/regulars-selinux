@@ -1,0 +1,451 @@
+.TH  "teleport_selinux"  "8"  "23-06-06" "teleport" "SELinux Policy teleport"
+.SH "NAME"
+teleport_selinux \- Security Enhanced Linux Policy for the teleport processes
+.SH "DESCRIPTION"
+
+Security-Enhanced Linux secures the teleport processes via flexible mandatory access control.
+
+The teleport processes execute with the teleport_t SELinux type. You can check if you have these processes running by executing the \fBps\fP command with the \fB\-Z\fP qualifier.
+
+For example:
+
+.B ps -eZ | grep teleport_t
+
+
+.SH "ENTRYPOINTS"
+
+The teleport_t SELinux type can be entered via the \fBteleport_exec_t\fP file type.
+
+The default entrypoint paths for the teleport_t domain are the following:
+
+/usr/local/bin/teleport
+.SH PROCESS TYPES
+SELinux defines process types (domains) for each process running on the system
+.PP
+You can see the context of a process using the \fB\-Z\fP option to \fBps\bP
+.PP
+Policy governs the access confined processes have to files.
+SELinux teleport policy is very flexible allowing users to setup their teleport processes in as secure a method as possible.
+.PP
+The following process types are defined for teleport:
+
+.EX
+.B teleport_t
+.EE
+.PP
+Note:
+.B semanage permissive -a teleport_t
+can be used to make the process type teleport_t permissive. SELinux does not deny access to permissive process types, but the AVC (SELinux denials) messages are still generated.
+
+.SH BOOLEANS
+SELinux policy is customizable based on least access required.  teleport policy is extremely flexible and has several booleans that allow you to manipulate the policy and run teleport with the tightest access possible.
+
+
+.PP
+If you want to dontaudit all daemons scheduling requests (setsched, sys_nice), you must turn on the daemons_dontaudit_scheduling boolean. Enabled by default.
+
+.EX
+.B setsebool -P daemons_dontaudit_scheduling 1
+
+.EE
+
+.PP
+If you want to allow all domains to execute in fips_mode, you must turn on the fips_mode boolean. Enabled by default.
+
+.EX
+.B setsebool -P fips_mode 1
+
+.EE
+
+.PP
+If you want to allow confined applications to run with kerberos, you must turn on the kerberos_enabled boolean. Enabled by default.
+
+.EX
+.B setsebool -P kerberos_enabled 1
+
+.EE
+
+.PP
+If you want to allow system to run with NIS, you must turn on the nis_enabled boolean. Disabled by default.
+
+.EX
+.B setsebool -P nis_enabled 1
+
+.EE
+
+.PP
+If you want to enable polyinstantiated directory support, you must turn on the polyinstantiation_enabled boolean. Disabled by default.
+
+.EX
+.B setsebool -P polyinstantiation_enabled 1
+
+.EE
+
+.PP
+If you want to allow ssh logins as sysadm_r:sysadm_t, you must turn on the ssh_sysadm_login boolean. Disabled by default.
+
+.EX
+.B setsebool -P ssh_sysadm_login 1
+
+.EE
+
+.SH PORT TYPES
+SELinux defines port types to represent TCP and UDP ports.
+.PP
+You can see the types associated with a port by using the following command:
+
+.B semanage port -l
+
+.PP
+Policy governs the access confined processes have to these ports.
+SELinux teleport policy is very flexible allowing users to setup their teleport processes in as secure a method as possible.
+.PP
+The following port types are defined for teleport:
+
+.EX
+.TP 5
+.B teleport_port_t
+.TP 10
+.EE
+
+.SH "MANAGED FILES"
+
+The SELinux process type teleport_t can manage files labeled with the following file types.  The paths listed are the default paths for these file types.  Note the processes UID still need to have DAC permissions.
+
+.br
+.B auth_cache_t
+
+	/var/cache/coolkey(/.*)?
+.br
+
+.br
+.B auth_home_t
+
+	/root/\.yubico(/.*)?
+.br
+	/root/\.config/Yubico(/.*)?
+.br
+	/root/\.google_authenticator
+.br
+	/root/\.google_authenticator~
+.br
+	/home/[^/]+/\.yubico(/.*)?
+.br
+	/home/[^/]+/\.config/Yubico(/.*)?
+.br
+	/home/[^/]+/\.google_authenticator
+.br
+	/home/[^/]+/\.google_authenticator~
+.br
+
+.br
+.B cluster_conf_t
+
+	/etc/cluster(/.*)?
+.br
+
+.br
+.B cluster_var_lib_t
+
+	/var/lib/pcsd(/.*)?
+.br
+	/var/lib/cluster(/.*)?
+.br
+	/var/lib/openais(/.*)?
+.br
+	/var/lib/pengine(/.*)?
+.br
+	/var/lib/corosync(/.*)?
+.br
+	/usr/lib/heartbeat(/.*)?
+.br
+	/var/lib/heartbeat(/.*)?
+.br
+	/var/lib/pacemaker(/.*)?
+.br
+
+.br
+.B cluster_var_run_t
+
+	/var/run/crm(/.*)?
+.br
+	/var/run/cman_.*
+.br
+	/var/run/rsctmp(/.*)?
+.br
+	/var/run/aisexec.*
+.br
+	/var/run/heartbeat(/.*)?
+.br
+	/var/run/pcsd-ruby.socket
+.br
+	/var/run/corosync-qnetd(/.*)?
+.br
+	/var/run/corosync-qdevice(/.*)?
+.br
+	/var/run/corosync\.pid
+.br
+	/var/run/cpglockd\.pid
+.br
+	/var/run/rgmanager\.pid
+.br
+	/var/run/cluster/rgmanager\.sk
+.br
+
+.br
+.B faillog_t
+
+	/var/log/btmp.*
+.br
+	/var/log/faillog.*
+.br
+	/var/log/tallylog.*
+.br
+	/var/run/faillock(/.*)?
+.br
+
+.br
+.B initrc_var_run_t
+
+	/var/run/utmp
+.br
+	/var/run/random-seed
+.br
+	/var/run/runlevel\.dir
+.br
+	/var/run/setmixer_flag
+.br
+
+.br
+.B krb5_host_rcache_t
+
+	/var/tmp/krb5_0.rcache2
+.br
+	/var/cache/krb5rcache(/.*)?
+.br
+	/var/tmp/nfs_0
+.br
+	/var/tmp/DNS_25
+.br
+	/var/tmp/host_0
+.br
+	/var/tmp/imap_0
+.br
+	/var/tmp/HTTP_23
+.br
+	/var/tmp/HTTP_48
+.br
+	/var/tmp/ldap_55
+.br
+	/var/tmp/ldap_487
+.br
+	/var/tmp/ldapmap1_0
+.br
+
+.br
+.B lastlog_t
+
+	/var/log/lastlog.*
+.br
+
+.br
+.B pam_var_run_t
+
+	/var/(db|adm)/sudo(/.*)?
+.br
+	/var/lib/sudo(/.*)?
+.br
+	/var/run/sudo(/.*)?
+.br
+	/var/run/pam_ssh(/.*)?
+.br
+	/var/run/sepermit(/.*)?
+.br
+	/var/run/pam_mount(/.*)?
+.br
+	/var/run/pam_timestamp(/.*)?
+.br
+
+.br
+.B root_t
+
+	/sysroot/ostree/deploy/.*-atomic/deploy(/.*)?
+.br
+	/
+.br
+	/initrd
+.br
+
+.br
+.B security_t
+
+	/selinux
+.br
+
+.br
+.B teleport_tmp_t
+
+
+.br
+.B teleport_var_lib_t
+
+	/var/lib/teleport(/.*)?
+.br
+
+.br
+.B teleport_var_run_t
+
+	/run/teleport.pid
+.br
+	/var/run/teleport.pid
+.br
+
+.br
+.B user_tmp_t
+
+	/dev/shm/mono.*
+.br
+	/var/run/user/[^/]+
+.br
+	/tmp/\.ICE-unix(/.*)?
+.br
+	/tmp/\.X11-unix(/.*)?
+.br
+	/dev/shm/pulse-shm.*
+.br
+	/tmp/\.X0-lock
+.br
+	/var/run/user
+.br
+	/tmp/hsperfdata_root
+.br
+	/var/tmp/hsperfdata_root
+.br
+	/home/[^/]+/tmp
+.br
+	/home/[^/]+/\.tmp
+.br
+	/var/run/user/[0-9]+
+.br
+	/tmp/gconfd-[^/]+
+.br
+
+.br
+.B var_auth_t
+
+	/var/ace(/.*)?
+.br
+	/var/rsa(/.*)?
+.br
+	/var/lib/abl(/.*)?
+.br
+	/var/lib/rsa(/.*)?
+.br
+	/var/lib/pam_ssh(/.*)?
+.br
+	/var/lib/pam_shield(/.*)?
+.br
+	/var/opt/quest/vas/vasd(/.*)?
+.br
+	/var/lib/google-authenticator(/.*)?
+.br
+
+.br
+.B wtmp_t
+
+	/var/log/wtmp.*
+.br
+
+.SH FILE CONTEXTS
+SELinux requires files to have an extended attribute to define the file type.
+.PP
+You can see the context of a file using the \fB\-Z\fP option to \fBls\bP
+.PP
+Policy governs the access confined processes have to these files.
+SELinux teleport policy is very flexible allowing users to setup their teleport processes in as secure a method as possible.
+.PP
+
+.PP
+.B STANDARD FILE CONTEXT
+
+SELinux defines the file context types for the teleport, if you wanted to
+store files with these types in a different paths, you need to execute the semanage command to specify alternate labeling and then use restorecon to put the labels on disk.
+
+.B semanage fcontext -a -t teleport_exec_t '/srv/teleport/content(/.*)?'
+.br
+.B restorecon -R -v /srv/myteleport_content
+
+Note: SELinux often uses regular expressions to specify labels that match multiple files.
+
+.I The following file types are defined for teleport:
+
+
+.EX
+.PP
+.B teleport_exec_t
+.EE
+
+- Set files with the teleport_exec_t type, if you want to transition an executable to the teleport_t domain.
+
+
+.EX
+.PP
+.B teleport_tmp_t
+.EE
+
+- Set files with the teleport_tmp_t type, if you want to store teleport temporary files in the /tmp directories.
+
+
+.EX
+.PP
+.B teleport_var_lib_t
+.EE
+
+- Set files with the teleport_var_lib_t type, if you want to store the teleport files under the /var/lib directory.
+
+
+.EX
+.PP
+.B teleport_var_run_t
+.EE
+
+- Set files with the teleport_var_run_t type, if you want to store the teleport files under the /run or /var/run directory.
+
+.br
+.TP 5
+Paths:
+/run/teleport.pid, /var/run/teleport.pid
+
+.PP
+Note: File context can be temporarily modified with the chcon command.  If you want to permanently change the file context you need to use the
+.B semanage fcontext
+command.  This will modify the SELinux labeling database.  You will need to use
+.B restorecon
+to apply the labels.
+
+.SH "COMMANDS"
+.B semanage fcontext
+can also be used to manipulate default file context mappings.
+.PP
+.B semanage permissive
+can also be used to manipulate whether or not a process type is permissive.
+.PP
+.B semanage module
+can also be used to enable/disable/install/remove policy modules.
+
+.B semanage port
+can also be used to manipulate the port definitions
+
+.B semanage boolean
+can also be used to manipulate the booleans
+
+.PP
+.B system-config-selinux
+is a GUI tool available to customize SELinux policy settings.
+
+.SH AUTHOR
+This manual page was auto-generated using
+.B "sepolicy manpage".
+
+.SH "SEE ALSO"
+selinux(8), teleport(8), semanage(8), restorecon(8), chcon(1), sepolicy(8), setsebool(8)

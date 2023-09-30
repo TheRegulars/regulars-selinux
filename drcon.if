@@ -1,0 +1,95 @@
+
+## <summary>policy for drcon</summary>
+
+########################################
+## <summary>
+##	Execute drcon_exec_t in the drcon domain.
+## </summary>
+## <param name="domain">
+## <summary>
+##	Domain allowed to transition.
+## </summary>
+## </param>
+#
+interface(`drcon_domtrans',`
+	gen_require(`
+		type drcon_t, drcon_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	domtrans_pattern($1, drcon_exec_t, drcon_t)
+')
+
+######################################
+## <summary>
+##	Execute drcon in the caller domain.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`drcon_exec',`
+	gen_require(`
+		type drcon_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	can_exec($1, drcon_exec_t)
+')
+
+########################################
+## <summary>
+##	Execute drcon in the drcon domain, and
+##	allow the specified role the drcon domain.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed to transition
+##	</summary>
+## </param>
+## <param name="role">
+##	<summary>
+##	The role to be allowed the drcon domain.
+##	</summary>
+## </param>
+#
+interface(`drcon_run',`
+	gen_require(`
+		type drcon_t;
+		attribute_role drcon_roles;
+	')
+
+	drcon_domtrans($1)
+	roleattribute $2 drcon_roles;
+')
+
+########################################
+## <summary>
+##	Role access for drcon
+## </summary>
+## <param name="role">
+##	<summary>
+##	Role allowed access
+##	</summary>
+## </param>
+## <param name="domain">
+##	<summary>
+##	User domain for the role
+##	</summary>
+## </param>
+#
+interface(`drcon_role',`
+	gen_require(`
+		type drcon_t;
+		attribute_role drcon_roles;
+	')
+
+	roleattribute $1 drcon_roles;
+
+	drcon_domtrans($2)
+
+	ps_process_pattern($2, drcon_t)
+	allow $2 drcon_t:process { signull signal sigkill };
+')
